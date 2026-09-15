@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>School Planner</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --bg:#0d0e13;
+    --panel:#15161d;
+    --border:#232430;
+    --border-soft:#1e1f29;
+    --text:#f4f4f6;
+    --muted:#8b8d98;
+    --accent:#7b6ef6;
+    --danger:#ef4565;
+    --warn:#f7b32b;
+    --good:#2cb67d;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Roboto, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+  }
+  h1,h2,.serif{
+    font-family:Georgia, 'Times New Roman', serif;
+    font-weight:400;
+  }
+
+  /* LOGIN */
+  #login-screen{
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    gap:18px;
+  }
+  #login-screen .box{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:40px 46px;
+  }
+  #login-screen h1{font-size:2.2rem;margin:0 0 8px;}
+  #login-screen p{color:var(--muted);margin:0 0 18px;font-size:0.95rem;}
+  .guest-btn{
+    margin-top:14px;
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--muted);
+    padding:9px 16px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:0.85rem;
+  }
+  .guest-btn:hover{color:var(--text);border-color:var(--accent);}
+
+  /* APP */
+  #app{display:none;}
+  .topbar{
+    height:6px;
+    background:var(--accent);
+  }
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    padding:28px 40px 0;
+    max-width:1200px;
+    margin:0 auto;
+  }
+  .date-label{
+    font-size:0.78rem;
+    letter-spacing:2px;
+    color:var(--muted);
+    font-weight:600;
+    text-transform:uppercase;
+  }
+  header h1{font-size:2.4rem;margin:6px 0 4px;}
+  .subtext{color:var(--muted);font-size:0.9rem;}
+  .header-right{display:flex;align-items:center;gap:12px;}
+  .user-chip{display:flex;align-items:center;gap:8px;font-size:0.85rem;color:var(--muted);}
+  .user-chip img{width:28px;height:28px;border-radius:50%;}
+  .lock-btn, .signout{
+    display:flex;align-items:center;gap:6px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:9px 16px;
+    border-radius:20px;
+    cursor:pointer;
+    font-size:0.85rem;
+  }
+  .lock-btn:hover, .signout:hover{border-color:var(--accent);}
+
+  .container{max-width:1200px;margin:0 auto;padding:20px 40px 60px;}
+
+  /* NAV SEGMENTED */
+  .nav-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;}
+  .segmented{
+    display:inline-flex;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:4px;
+    gap:2px;
+  }
+  .seg-btn{
+    display:flex;align-items:center;gap:6px;
+    padding:8px 18px;
+    border-radius:20px;
+    cursor:pointer;
+    font-size:0.88rem;
+    color:var(--muted);
+  }
+  .seg-btn.active{background:#232430;color:var(--text);font-weight:600;}
+
+  .day-tabs{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .day-tab{
+    display:flex;align-items:center;gap:6px;
+    padding:8px 16px;
+    border-radius:20px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    cursor:pointer;
+    font-size:0.85rem;
+    color:var(--muted);
+  }
+  .day-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .day-tab .count{
+    background:rgba(255,255,255,0.15);
+    border-radius:10px;
+    padding:1px 7px;
+    font-size:0.72rem;
+  }
+  .day-tab.active .count{background:rgba(255,255,255,0.25);}
+
+  .add-btn{
+    display:flex;align-items:center;gap:6px;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:20px;
+    cursor:pointer;
+    font-size:0.85rem;
+    font-weight:600;
+  }
+  .add-btn:hover{background:#6c5ff0;}
+
+  .section-title{font-size:1.3rem;margin:22px 0 12px;font-family:Georgia, serif;}
+
+  .empty-card{
+    border:1px dashed var(--border);
+    border-radius:14px;
+    padding:60px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:0.9rem;
+  }
+
+  .item-card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px 18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .item-card .left{display:flex;align-items:center;gap:12px;}
+  .item-card input[type="checkbox"]{width:18px;height:18px;accent-color:var(--accent);}
+  .item-title{font-size:0.95rem;font-weight:600;}
+  .item-meta{font-size:0.78rem;color:var(--muted);margin-top:2px;}
+  .item-card.done .item-title{color:var(--muted);text-decoration:line-through;}
+  .tag{
+    font-size:0.68rem;
+    padding:3px 9px;
+    border-radius:10px;
+    font-weight:700;
+    letter-spacing:0.5px;
+  }
+  .tag.high{background:rgba(239,69,101,0.15);color:var(--danger);}
+  .tag.med{background:rgba(247,179,43,0.15);color:var(--warn);}
+  .tag.low{background:rgba(44,182,125,0.15);color:var(--good);}
+  .del-btn{color:var(--muted);cursor:pointer;font-size:0.9rem;background:none;border:none;}
+  .del-btn:hover{color:var(--danger);}
+
+  /* modal form */
+  .modal-overlay{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(0,0,0,0.6);
+    align-items:center;justify-content:center;
+    z-index:20;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:28px;
+    width:360px;
+  }
+  .modal h3{margin:0 0 16px;font-family:Georgia,serif;font-size:1.2rem;}
+  .field{margin-bottom:12px;}
+  .field label{font-size:0.78rem;color:var(--muted);display:block;margin-bottom:5px;}
+  input, select{
+    width:100%;
+    background:#1c1d26;
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:9px 10px;
+    font-size:0.88rem;
+    outline:none;
+  }
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+  .cancel-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;}
+  .save-btn{background:var(--accent);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;}
+
+  /* assistant */
+  #chat-log{
+    display:flex;flex-direction:column;gap:10px;
+    max-height:420px;overflow-y:auto;
+    margin-bottom:14px;
+  }
+  .msg{padding:10px 14px;border-radius:12px;font-size:0.88rem;max-width:75%;line-height:1.4;}
+  .msg.bot{background:var(--panel);border:1px solid var(--border);align-self:flex-start;}
+  .msg.user{background:var(--accent);color:#fff;align-self:flex-end;}
+  .chat-row{display:flex;gap:10px;}
+  .quick-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .chip{
+    font-size:0.78rem;
+    padding:7px 14px;
+    border-radius:16px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    cursor:pointer;
+    color:var(--muted);
+  }
+  .chip:hover{color:var(--text);border-color:var(--accent);}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="box">
+    <h1>School Planner</h1>
+    <p>Your schedule, homework, and AI study assistant in one place.</p>
+    <div id="g_id_onload"
+      data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+      data-callback="handleGoogleLogin"
+      data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin" data-type="standard" data-theme="filled_black" data-size="large" data-shape="pill"></div>
+    <br/>
+    <button class="guest-btn" onclick="loginAsGuest()">Continue without Google (guest mode)</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar"></div>
+  <header>
+    <div>
+      <div class="date-label" id="date-label">TUESDAY, SEPTEMBER 15</div>
+      <h1 id="greeting">Good afternoon</h1>
+      <div class="subtext" id="task-summary">You have 0 tasks to finish.</div>
+    </div>
+    <div class="header-right">
+      <div class="user-chip"><img id="user-pic" src="" alt=""><span id="user-name">Guest</span></div>
+      <button class="lock-btn" onclick="toggleLock()">🔒 <span id="lock-label">Lock</span></button>
+      <button class="signout" onclick="signOut()">Sign out</button>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <div class="nav-row">
+      <div class="segmented">
+        <div class="seg-btn active" data-view="schedule" onclick="switchView('schedule')">📅 Schedule</div>
+        <div class="seg-btn" data-view="tasks" onclick="switchView('tasks')">☑️ Tasks</div>
+        <div class="seg-btn" data-view="assistant" onclick="switchView('assistant')">✨ Assistant</div>
+      </div>
+    </div>
+
+    <!-- SCHEDULE VIEW -->
+    <div id="view-schedule">
+      <div class="nav-row">
+        <div class="day-tabs" id="day-tabs"></div>
+        <button class="add-btn" onclick="openClassModal()">+ Add class</button>
+      </div>
+      <div class="section-title" id="day-heading">Tuesday</div>
+      <div id="class-list"></div>
+    </div>
+
+    <!-- TASKS VIEW -->
+    <div id="view-tasks" style="display:none;">
+      <div class="nav-row">
+        <div class="day-tabs" id="day-tabs-2"></div>
+        <button class="add-btn" onclick="openTaskModal()">+ Add task</button>
+      </div>
+      <div class="section-title" id="task-heading">Tuesday's tasks</div>
+      <div id="task-list"></div>
+    </div>
+
+    <!-- ASSISTANT VIEW -->
+    <div id="view-assistant" style="display:none;">
+      <div class="section-title">AI Study Assistant</div>
+      <div class="quick-chips">
+        <div class="chip" onclick="askQuick('What is due today?')">What's due today?</div>
+        <div class="chip" onclick="askQuick('Help me study')">Help me study</div>
+        <div class="chip" onclick="askQuick('Give me a break tip')">Study break tip</div>
+        <div class="chip" onclick="askQuick('Motivate me')">Motivate me</div>
+      </div>
+      <div id="chat-log"></div>
+      <div class="chat-row">
+        <input id="chat-input" placeholder="Ask your assistant..." onkeydown="if(event.key==='Enter')sendChat()" />
+        <button class="add-btn" onclick="sendChat()">Send</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- CLASS MODAL -->
+<div class="modal-overlay" id="class-modal">
+  <div class="modal">
+    <h3>Add a class</h3>
+    <div class="field"><label>Class name</label><input id="m-class-name" placeholder="e.g. Algebra II"></div>
+    <div class="field"><label>Day</label>
+      <select id="m-class-day">
+        <option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option><option>Sun</option>
+      </select>
+    </div>
+    <div class="field"><label>Time</label><input id="m-class-time" placeholder="e.g. 9:10–10:00"></div>
+    <div class="modal-actions">
+      <button class="cancel-btn" onclick="closeModal('class-modal')">Cancel</button>
+      <button class="save-btn" onclick="addClass()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TASK MODAL -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal">
+    <h3>Add a task</h3>
+    <div class="field"><label>Task name</label><input id="m-task-title" placeholder="e.g. Finish worksheet"></div>
+    <div class="field"><label>Day</label>
+      <select id="m-task-day">
+        <option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option><option>Sun</option>
+      </select>
+    </div>
+    <div class="field"><label>Priority</label>
+      <select id="m-task-priority">
+        <option value="high">High</option>
+        <option value="med" selected>Medium</option>
+        <option value="low">Low</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel-btn" onclick="closeModal('task-modal')">Cancel</button>
+      <button class="save-btn" onclick="addTask()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const dayFull = {Mon:"Monday",Tue:"Tuesday",Wed:"Wednesday",Thu:"Thursday",Fri:"Friday",Sat:"Saturday",Sun:"Sunday"};
+let activeDay = days[(new Date().getDay()+6)%7];
+let locked = false;
+
+let state = JSON.parse(localStorage.getItem('schoolPlannerData')) || {
+  classes: [
+    {name:"Algebra II", day:"Mon", time:"8:00–8:50"},
+    {name:"English 10", day:"Mon", time:"9:00–9:50"},
+    {name:"Biology", day:"Wed", time:"10:00–10:50"}
+  ],
+  tasks: [
+    {title:"Finish trig worksheet", day:"Mon", priority:"high", done:false},
+    {title:"Read Ch. 5 - Biology", day:"Wed", priority:"med", done:false}
+  ]
+};
+function save(){ localStorage.setItem('schoolPlannerData', JSON.stringify(state)); }
+
+/* LOGIN */
+function handleGoogleLogin(response){
+  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  localStorage.setItem('spUser', JSON.stringify({name: payload.name, pic: payload.picture}));
+  showApp(payload.name, payload.picture);
+}
+function loginAsGuest(){
+  localStorage.setItem('spUser', JSON.stringify({name:"big dih drake", pic:""}));
+  showApp("big dih drake", "");
+}
+function signOut(){
+  localStorage.removeItem('spUser');
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+function showApp(name, pic){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('user-name').innerText = name;
+  document.getElementById('user-pic').src = pic || 'https://api.dicebear.com/7.x/shapes/svg?seed='+encodeURIComponent(name);
+  setGreeting();
+  renderDayTabs(); renderClasses(); renderTasks(); updateSummary();
+}
+window.onload = function(){
+  const saved = localStorage.getItem('spUser');
+  if(saved){ const u = JSON.parse(saved); showApp(u.name, u.pic); }
+  else { document.getElementById('login-screen').style.display='flex'; }
+};
+
+function setGreeting(){
+  const now = new Date();
+  const hour = now.getHours();
+  const g = hour<12 ? "Good morning" : hour<18 ? "Good afternoon" : "Good evening";
+  document.getElementById('greeting').innerText = g;
+  const opts = { weekday:'long', month:'long', day:'numeric' };
+  document.getElementById('date-label').innerText = now.toLocaleDateString('en-US', opts).toUpperCase();
+}
+
+function toggleLock(){
+  locked = !locked;
+  document.getElementById('lock-label').innerText = locked ? "Unlock" : "Lock";
+  document.querySelectorAll('.add-btn, .del-btn, input[type="checkbox"]').forEach(el=>{
+    el.style.pointerEvents = locked ? 'none' : 'auto';
+    el.style.opacity = locked ? '0.4' : '1';
+  });
+}
+
+function switchView(view){
+  document.querySelectorAll('.seg-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  document.getElementById('view-schedule').style.display = view==='schedule' ? 'block':'none';
+  document.getElementById('view-tasks').style.display = view==='tasks' ? 'block':'none';
+  document.getElementById('view-assistant').style.display = view==='assistant' ? 'block':'none';
+  if(view==='assistant' && document.getElementById('chat-log').children.length===0){
+    addMsg("Hey! I'm your planner assistant. Ask me what's due, for study tips, or motivation anytime.", 'bot');
+  }
+}
+
+function renderDayTabs(){
+  ['day-tabs','day-tabs-2'].forEach(id=>{
+    const wrap = document.getElementById(id);
+    wrap.innerHTML = '';
+    days.forEach(d=>{
+      const count = id==='day-tabs'
+        ? state.classes.filter(c=>c.day===d).length
+        : state.tasks.filter(t=>t.day===d && !t.done).length;
+      const el = document.createElement('div');
+      el.className = 'day-tab' + (d===activeDay?' active':'');
+      el.innerHTML = d + (count>0 ? ` <span class="count">${count}</span>` : '');
+      el.onclick = ()=>{ activeDay=d; renderDayTabs(); renderClasses(); renderTasks(); };
+      wrap.appendChild(el);
+    });
+  });
+  document.getElementById('day-heading').innerText = dayFull[activeDay];
+  document.getElementById('task-heading').innerText = dayFull[activeDay] + "'s tasks";
+}
+
+function renderClasses(){
+  const list = document.getElementById('class-list');
+  list.innerHTML = '';
+  const items = state.classes.filter(c=>c.day===activeDay);
+  if(items.length===0){
+    list.innerHTML = `<div class="empty-card">No classes scheduled for ${dayFull[activeDay]}.</div>`;
+    return;
+  }
+  items.forEach(c=>{
+    const realIndex = state.classes.indexOf(c);
+    const div = document.createElement('div');
+    div.className='item-card';
+    div.innerHTML = `
+      <div class="left">
+        <div>
+          <div class="item-title">${c.name}</div>
+          <div class="item-meta">${c.time}</div>
+        </div>
+      </div>
+      <button class="del-btn" onclick="removeClass(${realIndex})">✕</button>
+    `;
+    list.appendChild(div);
+  });
+}
+function openClassModal(){ document.getElementById('m-class-day').value = activeDay; document.getElementById('class-modal').classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+function addClass(){
+  const name = document.getElementById('m-class-name').value.trim();
+  const day = document.getElementById('m-class-day').value;
+  const time = document.getElementById('m-class-time').value.trim() || 'TBD';
+  if(!name) return;
+  state.classes.push({name, day, time});
+  document.getElementById('m-class-name').value=''; document.getElementById('m-class-time').value='';
+  save(); closeModal('class-modal'); renderDayTabs(); renderClasses();
+}
+function removeClass(i){ state.classes.splice(i,1); save(); renderDayTabs(); renderClasses(); }
+
+function renderTasks(){
+  const list = document.getElementById('task-list');
+  list.innerHTML = '';
+  const items = state.tasks.filter(t=>t.day===activeDay);
+  if(items.length===0){
+    list.innerHTML = `<div class="empty-card">Nothing scheduled for ${dayFull[activeDay]}.</div>`;
+    updateSummary();
+    return;
+  }
+  items.forEach(t=>{
+    const realIndex = state.tasks.indexOf(t);
+    const div = document.createElement('div');
+    div.className='item-card' + (t.done ? ' done' : '');
+    div.innerHTML = `
+      <div class="left">
+        <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${realIndex})">
+        <div>
+          <div class="item-title">${t.title}</div>
+          <div class="item-meta"><span class="tag ${t.priority}">${t.priority.toUpperCase()}</span></div>
+        </div>
+      </div>
+      <button class="del-btn" onclick="removeTask(${realIndex})">✕</button>
+    `;
+    list.appendChild(div);
+  });
+  updateSummary();
+}
+function openTaskModal(){ document.getElementById('m-task-day').value = activeDay; document.getElementById('task-modal').classList.add('show'); }
+function addTask(){
+  const title = document.getElementById('m-task-title').value.trim();
+  const day = document.getElementById('m-task-day').value;
+  const priority = document.getElementById('m-task-priority').value;
+  if(!title) return;
+  state.tasks.push({title, day, priority, done:false});
+  document.getElementById('m-task-title').value='';
+  save(); closeModal('task-modal'); renderDayTabs(); renderTasks();
+}
+function toggleTask(i){ state.tasks[i].done = !state.tasks[i].done; save(); renderTasks(); }
+function removeTask(i){ state.tasks.splice(i,1); save(); renderDayTabs(); renderTasks(); }
+
+function updateSummary(){
+  const pending = state.tasks.filter(t=>!t.done).length;
+  document.getElementById('task-summary').innerText = `You have ${pending} task${pending===1?'':'s'} to finish.`;
+}
+
+/* ASSISTANT */
+function addMsg(text, who){
+  const log = document.getElementById('chat-log');
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  div.innerText = text;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+function askQuick(text){ document.getElementById('chat-input').value = text; sendChat(); }
+function aiRespond(msg){
+  const m = msg.toLowerCase();
+  const pending = state.tasks.filter(t=>!t.done);
+  if(m.includes('due today') || m.includes('today')){
+    const todayShort = days[(new Date().getDay()+6)%7];
+    const items = state.tasks.filter(t=>t.day===todayShort && !t.done);
+    if(items.length===0) return "Nothing due today, you're free!";
+    return "Due today: " + items.map(t=>t.title+" ("+t.priority+")").join(", ");
+  }
+  if(m.includes('study')){
+    if(pending.length===0) return "You're all caught up — maybe review notes for 15 minutes to stay sharp.";
+    const order = {high:0, med:1, low:2};
+    const top = pending.sort((a,b)=>order[a.priority]-order[b.priority])[0];
+    return "Start with \"" + top.title + "\" — it's marked " + top.priority + " priority. Try 25 minutes focused, then a 5 minute break.";
+  }
+  if(m.includes('break') || m.includes('tip')){
+    const tips = [
+      "Stand up, stretch, and look at something 20 feet away for 20 seconds.",
+      "Grab water and do 10 pushups — quick reset for your brain.",
+      "Step outside for 5 minutes of fresh air before your next task.",
+      "Try box breathing: inhale 4s, hold 4s, exhale 4s, hold 4s, repeat 4 times."
+    ];
+    return tips[Math.floor(Math.random()*tips.length)];
+  }
+  if(m.includes('motivate')){
+    const lines = [
+      "You don't have to finish everything today, just start the next thing.",
+      "Small progress beats zero progress. Knock out one task right now.",
+      "Future you will thank you for finishing this early.",
+      "You've handled harder weeks than this, keep going."
+    ];
+    return lines[Math.floor(Math.random()*lines.length)];
+  }
+  if(m.includes('how many') || m.includes('left') || m.includes('pending')){
+    return pending.length===0 ? "You've completed everything, nice work!" : "You have " + pending.length + " task(s) left: " + pending.map(t=>t.title).join(", ");
+  }
+  return "I can help with your schedule. Try asking what's due today, for study tips, a break idea, or motivation.";
+}
+function sendChat(){
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if(!text) return;
+  addMsg(text, 'user');
+  input.value='';
+  addMsg(aiRespond(text), 'bot');
+}
+</script>
+</body>
+</html>
